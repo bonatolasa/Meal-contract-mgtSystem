@@ -1,8 +1,8 @@
 import axios from 'axios';
 
-const DEFAULT_API_ORIGIN = import.meta.env.DEV
-  ? 'http://localhost:3000'
-  : 'https://meal-contract-mgtsystem.onrender.com';
+const LOCAL_API_ORIGIN = 'http://localhost:3000';
+const DEPLOYED_API_ORIGIN = 'https://meal-contract-mgtsystem.onrender.com';
+const DEFAULT_API_ORIGIN = import.meta.env.DEV ? LOCAL_API_ORIGIN : DEPLOYED_API_ORIGIN;
 const configuredApiOrigin = import.meta.env.VITE_API_URL?.trim();
 const isLocalApiOrigin = configuredApiOrigin && /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?\/?$/i.test(configuredApiOrigin);
 const API_ORIGIN = (isLocalApiOrigin && !import.meta.env.DEV ? DEFAULT_API_ORIGIN : configuredApiOrigin || DEFAULT_API_ORIGIN)
@@ -25,11 +25,21 @@ api.interceptors.request.use((config) => {
 
 api.interceptors.response.use(
   (response) => response,
-  (error) => {
+  async (error) => {
     if (error.response && error.response.status === 401) {
       localStorage.removeItem('token');
       window.location.href = '/login';
     }
+
+    // Local development prefers localhost, but can still use the deployed API
+    // when the local backend is stopped or unreachable.
+    const requestConfig = error.config;
+    if (import.meta.env.DEV && requestConfig && !requestConfig._triedDeployedApi && (!error.response || error.code === 'ERR_NETWORK')) {
+      requestConfig._triedDeployedApi = true;
+      requestConfig.baseURL = `${DEPLOYED_API_ORIGIN}/api`;
+      return api.request(requestConfig);
+    }
+
     return Promise.reject(error);
   },
 );

@@ -16,10 +16,17 @@ import { CustomersModule } from '../customers/customers.module';
     PassportModule,
     JwtModule.registerAsync({
       imports: [ConfigModule],
-      useFactory: async (configService: ConfigService) => ({
-        secret: configService.get<string>('JWT_SECRET') || 'default-secret',
-        signOptions: { expiresIn: configService.get<string>('JWT_EXPIRATION') || '7d' },
-      }),
+      useFactory: async (configService: ConfigService) => {
+        const secret = configService.get<string>('JWT_SECRET');
+        if (!secret) throw new Error('JWT_SECRET must be configured in the backend environment');
+        if (configService.get<string>('NODE_ENV') === 'production' && secret.length < 32) {
+          throw new Error('JWT_SECRET must be at least 32 characters in production');
+        }
+        return {
+          secret,
+          signOptions: { expiresIn: configService.get<string>('JWT_EXPIRATION') || '7d' },
+        };
+      },
       inject: [ConfigService],
     }),
   ],

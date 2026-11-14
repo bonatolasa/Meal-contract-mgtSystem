@@ -106,6 +106,18 @@ JWT_EXPIRATION=7d
 BCRYPT_SALT_ROUNDS=10
 ```
 
+### Production secrets (backend service)
+
+Set these in the backend service's environment settings on Render or Vercel, not in the frontend project or committed files:
+
+- `MONGODB_URI` — private MongoDB connection string, including database credentials.
+- `JWT_SECRET` — a random secret of at least 32 characters. Production startup fails if it is missing or too short.
+- `CLIENT_URL` — the frontend's public origin, such as `https://your-frontend.onrender.com`. This is configuration, not a secret.
+- `JWT_EXPIRATION` — optional token lifetime, such as `7d`.
+- `NODE_ENV=production` — enables production configuration checks.
+
+`VITE_API_URL` belongs in the frontend build environment. It is included in public browser code and should contain only the backend's public URL. Never put database credentials, JWT secrets, or passwords in a `VITE_` variable. Keep `.env` files out of Git. Use owner provisioning credentials only as temporary environment variables when running the account creation command, then remove them.
+
 ## API Endpoints
 
 | Method | Path | Description |

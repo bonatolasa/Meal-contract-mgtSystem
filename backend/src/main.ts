@@ -8,10 +8,14 @@ async function bootstrap() {
 
   app.setGlobalPrefix('api');
 
-  const allowedOrigins = (process.env.CLIENT_URL || 'http://localhost:5173')
-    .split(',')
+  const allowedOrigins = [
+    'http://localhost:5173',
+    'https://meal-contract-mgtsystem-1.onrender.com',
+    ...(process.env.CLIENT_URL || '').split(','),
+  ]
     .map((origin) => origin.trim())
-    .filter(Boolean);
+    .filter(Boolean)
+    .filter((origin, index, origins) => origins.indexOf(origin) === index);
 
   app.enableCors({
     origin: allowedOrigins,

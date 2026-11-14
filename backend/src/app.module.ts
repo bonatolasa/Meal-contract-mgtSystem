@@ -15,11 +15,17 @@ import { NotificationsModule } from './notifications/notifications.module';
     ConfigModule.forRoot({ isGlobal: true, envFilePath: '.env' }),
     MongooseModule.forRootAsync({
       imports: [ConfigModule],
-      useFactory: async (configService: ConfigService) => ({
-        uri: configService.get<string>('MONGODB_URI') || 'mongodb://localhost:27017/meal_contract_db',
-        serverSelectionTimeoutMS: 10000,
-        socketTimeoutMS: 45000,
-      }),
+      useFactory: async (configService: ConfigService) => {
+        const uri = configService.get<string>('MONGODB_URI');
+        if (!uri && configService.get<string>('NODE_ENV') === 'production') {
+          throw new Error('MONGODB_URI must be configured in production');
+        }
+        return {
+          uri: uri || 'mongodb://localhost:27017/meal_contract_db',
+          serverSelectionTimeoutMS: 10000,
+          socketTimeoutMS: 45000,
+        };
+      },
       inject: [ConfigService],
     }),
     AuthModule,
