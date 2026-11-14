@@ -5,6 +5,9 @@ export type CustomerDocument = Customer & Document;
 
 @Schema({ timestamps: true })
 export class Customer {
+  @Prop({ type: Types.ObjectId, ref: 'User', unique: true, sparse: true })
+  user: Types.ObjectId;
+
   @Prop({ required: true })
   customerId: string;
 

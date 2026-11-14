@@ -25,6 +25,18 @@ export class Payment {
 
   @Prop()
   notes: string;
+
+  @Prop({ type: Types.ObjectId, ref: 'User', required: true })
+  recordedBy: Types.ObjectId;
+
+  @Prop({ enum: ['recorded', 'reversed'], default: 'recorded' })
+  status: string;
+
+  @Prop({ type: Types.ObjectId, ref: 'User' })
+  reversedBy: Types.ObjectId;
+
+  @Prop()
+  reversalNote: string;
 }
 
 export const PaymentSchema = SchemaFactory.createForClass(Payment);

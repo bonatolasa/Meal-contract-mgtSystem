@@ -10,23 +10,24 @@ export function AuthProvider({ children }) {
   useEffect(() => {
     const token = localStorage.getItem('token');
     if (token) {
-      getMe().then((res) => setUser(res.data.user)).catch(() => localStorage.removeItem('token'));
+      getMe().then((res) => setUser(res.data.user)).catch(() => localStorage.removeItem('token')).finally(() => setLoading(false));
+    } else {
+      setLoading(false);
     }
-    setLoading(false);
   }, []);
 
   const login = async (email, password) => {
     const res = await loginUser(email, password);
     localStorage.setItem('token', res.data.access_token);
     setUser(res.data.user);
-    return res.data;
+    return res.data.user;
   };
 
-  const register = async (name, email, password, role) => {
-    const res = await registerUser(name, email, password, role);
+  const register = async (name, email, password, role, phone, address) => {
+    const res = await registerUser(name, email, password, role, phone, address);
     localStorage.setItem('token', res.data.access_token);
     setUser(res.data.user);
-    return res.data;
+    return res.data.user;
   };
 
   const logout = () => {
@@ -41,6 +42,7 @@ export function AuthProvider({ children }) {
     register,
     logout,
     isAuthenticated: !!user,
+    homePath: user?.role === 'student' ? '/student/dashboard' : user?.role === 'employee' ? '/employee/dashboard' : user?.role === 'admin' ? '/admin/dashboard' : '/owner/dashboard',
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

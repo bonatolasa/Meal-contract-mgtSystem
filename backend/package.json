@@ -7,6 +7,8 @@
     "build": "tsc",
     "start": "node dist/main.js",
     "start:dev": "nest start --watch",
+    "db:check": "ts-node db-check.ts",
+    "create:owner": "ts-node scripts/create-owner.ts",
     "start:prod": "node dist/main.js",
     "lint": "eslint 'src/**/*.ts' --fix",
     "format": "prettier --write 'src/**/*.ts'"
@@ -27,6 +29,7 @@
     "class-validator": "^0.14.0",
     "cookie-parser": "^1.4.7",
     "cors": "^2.8.5",
+    "dotenv": "^18.0.10",
     "helmet": "^7.1.0",
     "moment": "^2.30.0",
     "mongoose": "^8.0.0",

@@ -17,6 +17,8 @@ import { NotificationsModule } from './notifications/notifications.module';
       imports: [ConfigModule],
       useFactory: async (configService: ConfigService) => ({
         uri: configService.get<string>('MONGODB_URI') || 'mongodb://localhost:27017/meal_contract_db',
+        serverSelectionTimeoutMS: 10000,
+        socketTimeoutMS: 45000,
       }),
       inject: [ConfigService],
     }),

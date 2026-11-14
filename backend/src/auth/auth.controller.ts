@@ -1,4 +1,4 @@
-import { Controller, Post, Body, Get, UseGuards, Request } from '@nestjs/common';
+import { Controller, Post, Body, Get, UseGuards, Request, BadRequestException } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { JwtAuthGuard } from './jwt-auth.guard';
 
@@ -7,8 +7,11 @@ export class AuthController {
   constructor(private authService: AuthService) {}
 
   @Post('register')
-  async register(@Body() body: { email: string; password: string; role: string; name: string }) {
-    return this.authService.register(body.email, body.password, body.role, body.name);
+  async register(@Body() body: { email: string; password: string; role: string; name: string; phone: string; address: string }) {
+    if (!['student', 'employee'].includes(body.role)) {
+      throw new BadRequestException('Public registration is limited to students and employees');
+    }
+    return this.authService.register(body.email, body.password, body.role, body.name, body.phone, body.address);
   }
 
   @Post('login')
@@ -19,6 +22,6 @@ export class AuthController {
   @Get('me')
   @UseGuards(JwtAuthGuard)
   async me(@Request() req) {
-    return req.user;
+    return { user: req.user };
   }
 }

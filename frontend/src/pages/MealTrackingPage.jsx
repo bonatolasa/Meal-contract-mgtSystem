@@ -1,10 +1,12 @@
 import { useEffect, useState } from 'react';
-import { getCustomers, getContracts, recordMeal, getMealTrackingByDate, getTodayStats } from '../services/api';
+import { getCustomers, getContracts, getActiveContracts, recordMeal, getMealTrackingByDate, getTodayStats, reverseMeal } from '../services/api';
 import { toast } from 'react-hot-toast';
 import { Utensils, Calendar, Check, X, RefreshCw } from 'lucide-react';
 import { format } from 'date-fns';
+import { useAuth } from '../context/AuthContext';
 
 export default function MealTrackingPage() {
+  const { user } = useAuth();
   const [customers, setCustomers] = useState([]);
   const [contracts, setContracts] = useState([]);
   const [selectedDate, setSelectedDate] = useState(format(new Date(), 'yyyy-MM-dd'));
@@ -16,7 +18,7 @@ export default function MealTrackingPage() {
 
   const load = async () => {
     try {
-      const [c, ct, s] = await Promise.all([getCustomers(), getContracts(), getTodayStats()]);
+      const [c, ct, s] = await Promise.all([getCustomers(), user?.role === 'employee' ? getActiveContracts() : getContracts(), getTodayStats()]);
       setCustomers(c.data || []);
       setContracts(ct.data || []);
       setStats(s.data);
@@ -33,7 +35,7 @@ export default function MealTrackingPage() {
       const res = await getMealTrackingByDate(date);
       const map = {};
       (res.data || []).forEach((r) => {
-        map[r.customer?._id || r.customer] = { breakfast: r.breakfast, lunch: r.lunch, dinner: r.dinner, notes: r.notes };
+        map[r.customer?._id || r.customer] = { _id: r._id, status: r.status, breakfast: r.breakfast, lunch: r.lunch, dinner: r.dinner, notes: r.notes, dirty: false };
       });
       setRecords(map);
     } catch (err) {
@@ -47,11 +49,13 @@ export default function MealTrackingPage() {
   };
 
   const toggleMeal = (customerId, mealType) => {
+    if (records[customerId]?.[mealType]) return;
     setRecords((prev) => ({
       ...prev,
       [customerId]: {
         ...(prev[customerId] || {}),
         [mealType]: !prev[customerId]?.[mealType],
+        dirty: true,
       },
     }));
   };
@@ -70,7 +74,7 @@ export default function MealTrackingPage() {
       toast.success('Meal record saved');
       load();
     } catch (err) {
-      toast.error('Save failed');
+      toast.error(err.response?.data?.message || 'Save failed');
     }
   };
 
@@ -139,7 +143,10 @@ export default function MealTrackingPage() {
             </thead>
             <tbody className="divide-y divide-gray-200">
               {customers.filter((c) => c.isActive).map((customer) => {
-                const hasContract = activeContracts.some((c) => c.customer?._id === customer._id);
+                const hasContract = activeContracts.some((c) => {
+                  const customerId = c.customer?._id || c.customer;
+                  return customerId === customer._id && new Date(c.startDate) <= new Date(`${selectedDate}T23:59:59`) && new Date(c.endDate) >= new Date(`${selectedDate}T00:00:00`);
+                });
                 const record = records[customer._id] || {};
                 return (
                   <tr key={customer._id} className="hover:bg-gray-50">
@@ -150,6 +157,7 @@ export default function MealTrackingPage() {
                     <td className="px-6 py-4">
                       <button
                         onClick={() => toggleMeal(customer._id, 'breakfast')}
+                        disabled={!hasContract || record.breakfast}
                         className={`w-8 h-8 rounded-full flex items-center justify-center ${record.breakfast ? 'bg-green-500 text-white' : 'bg-gray-200 text-gray-500'}`}
                       >
                         {record.breakfast ? <Check size={16} /> : <X size={16} />}
@@ -158,6 +166,7 @@ export default function MealTrackingPage() {
                     <td className="px-6 py-4">
                       <button
                         onClick={() => toggleMeal(customer._id, 'lunch')}
+                        disabled={!hasContract || record.lunch}
                         className={`w-8 h-8 rounded-full flex items-center justify-center ${record.lunch ? 'bg-green-500 text-white' : 'bg-gray-200 text-gray-500'}`}
                       >
                         {record.lunch ? <Check size={16} /> : <X size={16} />}
@@ -166,6 +175,7 @@ export default function MealTrackingPage() {
                     <td className="px-6 py-4">
                       <button
                         onClick={() => toggleMeal(customer._id, 'dinner')}
+                        disabled={!hasContract || record.dinner}
                         className={`w-8 h-8 rounded-full flex items-center justify-center ${record.dinner ? 'bg-green-500 text-white' : 'bg-gray-200 text-gray-500'}`}
                       >
                         {record.dinner ? <Check size={16} /> : <X size={16} />}
@@ -184,12 +194,20 @@ export default function MealTrackingPage() {
                       />
                     </td>
                     <td className="px-6 py-4">
-                      <button
+                      {record._id && user?.role === 'owner' && record.status !== 'reversed' ? <button onClick={async () => {
+                        const note = window.prompt('Reason for reversing this meal record:');
+                        if (!note?.trim()) return;
+                        try { await reverseMeal(record._id, note.trim()); toast.success('Meal record reversed'); load(); }
+                        catch (error) { toast.error(error.response?.data?.message || 'Could not reverse meal'); }
+                      }} className="text-red-600 hover:underline text-sm mr-3">Reverse</button> : null}
+                      {record.dirty && <button
                         onClick={() => saveRecord(customer._id)}
                         className="bg-indigo-600 text-white px-3 py-1 rounded-md hover:bg-indigo-700 text-sm"
+                        disabled={!hasContract || (!record.breakfast && !record.lunch && !record.dinner)}
                       >
                         Save
-                      </button>
+                      </button>}
+                      {record.status === 'reversed' && <span className="text-xs text-red-600">Reversed</span>}
                     </td>
                   </tr>
                 );

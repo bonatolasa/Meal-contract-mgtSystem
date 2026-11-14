@@ -1,16 +1,17 @@
 import { useEffect, useState } from 'react';
-import { getContracts, createContract, updateContract, deleteContract, getCustomers } from '../services/api';
+import { getContracts, createContract, updateContract, deleteContract, getCustomers, getMealPackages } from '../services/api';
 import { toast } from 'react-hot-toast';
 import { FileText, Plus, Edit2, Trash2, X, CheckCircle, AlertCircle, Clock } from 'lucide-react';
 
 const emptyForm = {
   contractId: '', customer: '', mealPackage: '', startDate: '', endDate: '',
-  durationType: 'monthly', monthlyPrice: 0, totalAmount: 0,
+  durationType: 'monthly',
 };
 
 export default function ContractsPage() {
   const [contracts, setContracts] = useState([]);
   const [customers, setCustomers] = useState([]);
+  const [packages, setPackages] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [editing, setEditing] = useState(null);
@@ -21,9 +22,10 @@ export default function ContractsPage() {
 
   const load = async () => {
     try {
-      const [c, cust] = await Promise.all([getContracts(), getCustomers()]);
+      const [c, cust, packageRes] = await Promise.all([getContracts(), getCustomers(), getMealPackages()]);
       setContracts(c.data || []);
       setCustomers(cust.data || []);
+      setPackages(packageRes.data || []);
     } catch (err) {
       toast.error('Failed to load contracts');
     } finally {
@@ -56,7 +58,6 @@ export default function ContractsPage() {
       contractId: c.contractId, customer: c.customer?._id || c.customer,
       mealPackage: c.mealPackage?._id || c.mealPackage, startDate: c.startDate?.slice(0, 10) || '',
       endDate: c.endDate?.slice(0, 10) || '', durationType: c.durationType,
-      monthlyPrice: c.monthlyPrice, totalAmount: c.totalAmount,
     });
     setShowModal(true);
   };
@@ -92,9 +93,12 @@ export default function ContractsPage() {
 
   const statusBadge = (status) => {
     const styles = {
+      Draft: 'bg-gray-100 text-gray-800',
+      Pending: 'bg-yellow-100 text-yellow-800',
       Active: 'bg-green-100 text-green-800',
       Expired: 'bg-red-100 text-red-800',
       Suspended: 'bg-yellow-100 text-yellow-800',
+      Cancelled: 'bg-gray-100 text-gray-800',
     };
     return (
       <span className={`px-2 py-1 rounded-full text-xs font-medium ${styles[status] || 'bg-gray-100 text-gray-800'}`}>
@@ -144,6 +148,7 @@ export default function ContractsPage() {
                 <th className="px-6 py-3 text-sm font-semibold text-gray-600">Package</th>
                 <th className="px-6 py-3 text-sm font-semibold text-gray-600">Period</th>
                 <th className="px-6 py-3 text-sm font-semibold text-gray-600">Amount</th>
+                <th className="px-6 py-3 text-sm font-semibold text-gray-600">Billing</th>
                 <th className="px-6 py-3 text-sm font-semibold text-gray-600">Paid</th>
                 <th className="px-6 py-3 text-sm font-semibold text-gray-600">Balance</th>
                 <th className="px-6 py-3 text-sm font-semibold text-gray-600">Status</th>
@@ -160,6 +165,7 @@ export default function ContractsPage() {
                     {c.startDate?.slice(0, 10)} - {c.endDate?.slice(0, 10)}
                   </td>
                   <td className="px-6 py-4 text-sm text-gray-900">ETB {c.totalAmount?.toLocaleString()}</td>
+                  <td className="px-6 py-4 text-sm text-gray-600">Monthly subscription</td>
                   <td className="px-6 py-4 text-sm text-gray-600">ETB {c.amountPaid?.toLocaleString()}</td>
                   <td className="px-6 py-4 text-sm text-gray-900 font-medium">ETB {c.remainingBalance?.toLocaleString()}</td>
                   <td className="px-6 py-4">{statusBadge(c.status)}</td>
@@ -204,18 +210,11 @@ export default function ContractsPage() {
               </select>
               <select value={form.mealPackage} onChange={(e) => setForm({ ...form, mealPackage: e.target.value })} className="w-full px-3 py-2 border rounded-md" required>
                 <option value="">Select Meal Package</option>
-                {/* Options will be populated from meal packages API */}
-                <option value="">(Load from API)</option>
+                {packages.filter((pkg) => pkg.isActive).map((pkg) => <option key={pkg._id} value={pkg._id}>{pkg.name} — ETB {pkg.pricePerMonth}/month</option>)}
               </select>
               <input type="date" value={form.startDate} onChange={(e) => setForm({ ...form, startDate: e.target.value })} className="w-full px-3 py-2 border rounded-md" required />
               <input type="date" value={form.endDate} onChange={(e) => setForm({ ...form, endDate: e.target.value })} className="w-full px-3 py-2 border rounded-md" required />
-              <select value={form.durationType} onChange={(e) => setForm({ ...form, durationType: e.target.value })} className="w-full px-3 py-2 border rounded-md">
-                <option value="daily">Daily</option>
-                <option value="weekly">Weekly</option>
-                <option value="monthly">Monthly</option>
-              </select>
-              <input type="number" placeholder="Monthly Price" value={form.monthlyPrice} onChange={(e) => setForm({ ...form, monthlyPrice: +e.target.value })} className="w-full px-3 py-2 border rounded-md" required />
-              <input type="number" placeholder="Total Amount" value={form.totalAmount} onChange={(e) => setForm({ ...form, totalAmount: +e.target.value })} className="w-full px-3 py-2 border rounded-md" required />
+              <p className="rounded-md bg-gray-50 px-3 py-2 text-sm text-gray-700">Monthly subscription · fixed price regardless of daily attendance</p>
               <button type="submit" className="w-full bg-indigo-600 text-white py-2 rounded-md hover:bg-indigo-700">
                 {editing ? 'Update' : 'Create'}
               </button>

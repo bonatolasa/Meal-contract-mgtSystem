@@ -14,11 +14,13 @@ export default function LoginPage() {
     e.preventDefault();
     setLoading(true);
     try {
-      await login(email, password);
+      const user = await login(email, password);
       toast.success('Login successful');
-      navigate('/dashboard');
+      navigate(user.role === 'student' ? '/student/dashboard' : user.role === 'employee' ? '/employee/dashboard' : user.role === 'admin' ? '/admin/dashboard' : '/owner/dashboard');
     } catch (err) {
-      toast.error(err.response?.data?.message || 'Login failed');
+      const message = err.response?.data?.message
+        || (err.response ? `Login failed (${err.response.status}). Check your email and password.` : 'Cannot reach the login server. Check the frontend API URL and backend CORS settings.');
+      toast.error(Array.isArray(message) ? message.join(', ') : message);
     } finally {
       setLoading(false);
     }

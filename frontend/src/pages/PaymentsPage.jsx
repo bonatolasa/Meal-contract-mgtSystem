@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { getPayments, createPayment, getContracts, getCustomers, getOutstandingPayments } from '../services/api';
+import { getPayments, createPayment, getContracts, getCustomers, getOutstandingPayments, reversePayment } from '../services/api';
 import { toast } from 'react-hot-toast';
 import { CreditCard, Plus, DollarSign, AlertTriangle, X } from 'lucide-react';
 
@@ -43,7 +43,28 @@ export default function PaymentsPage() {
     }
   };
 
-  const totalOutstanding = outstanding.reduce((sum, c) => sum + (c.remainingBalance || 0), 0);
+  const totalOutstanding = outstanding.reduce((sum, c) => sum + (Number(c.remainingBalance) || 0), 0);
+
+  const downloadReceipt = async (payment) => {
+    const { jsPDF } = await import('jspdf');
+    const pdf = new jsPDF();
+    pdf.setFontSize(18);
+    pdf.text('Payment Receipt', 14, 20);
+    pdf.setFontSize(11);
+    const lines = [
+      `Receipt: ${payment._id}`,
+      `Date: ${payment.paymentDate ? new Date(payment.paymentDate).toLocaleString() : '—'}`,
+      `Customer: ${payment.customer?.name || '—'}`,
+      `Contract: ${payment.contract?.contractId || '—'}`,
+      `Amount: ETB ${Number(payment.amount).toLocaleString()}`,
+      `Method: ${payment.paymentMethod}`,
+      `Reference: ${payment.reference || '—'}`,
+      `Recorded by: ${payment.recordedBy?.name || '—'}`,
+      `Status: ${payment.status}`,
+    ];
+    pdf.text(lines, 14, 34);
+    pdf.save(`receipt-${payment._id}.pdf`);
+  };
 
   return (
     <div>
@@ -67,7 +88,7 @@ export default function PaymentsPage() {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-gray-600">Total Payments</p>
-              <p className="text-2xl font-bold text-green-600">ETB {payments.reduce((s, p) => s + (p.amount || 0), 0).toLocaleString()}</p>
+              <p className="text-2xl font-bold text-green-600">ETB {payments.filter((p) => p.status !== 'reversed').reduce((s, p) => s + (Number(p.amount) || 0), 0).toLocaleString()}</p>
             </div>
             <DollarSign className="text-green-500" size={32} />
           </div>
@@ -133,17 +154,26 @@ export default function PaymentsPage() {
                 <th className="px-6 py-3 text-sm font-semibold text-gray-600">Amount</th>
                 <th className="px-6 py-3 text-sm font-semibold text-gray-600">Method</th>
                 <th className="px-6 py-3 text-sm font-semibold text-gray-600">Reference</th>
+                <th className="px-6 py-3 text-sm font-semibold text-gray-600">Status</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200">
               {payments.map((p) => (
-                <tr key={p._id} className="hover:bg-gray-50">
+                <tr key={p._id} className={`hover:bg-gray-50 ${p.status === 'reversed' ? 'opacity-60' : ''}`}>
                   <td className="px-6 py-4 text-sm text-gray-600">{p.paymentDate?.slice(0, 10) || '-'}</td>
                   <td className="px-6 py-4 text-sm text-gray-900">{p.customer?.name || p.customer}</td>
                   <td className="px-6 py-4 text-sm text-gray-600">{p.contract?.contractId || p.contract}</td>
-                  <td className="px-6 py-4 text-sm font-medium text-green-600">ETB {p.amount?.toLocaleString()}</td>
+                  <td className="px-6 py-4 text-sm font-medium text-green-600">ETB {Number(p.amount).toLocaleString()}</td>
                   <td className="px-6 py-4 text-sm text-gray-600 capitalize">{p.paymentMethod}</td>
                   <td className="px-6 py-4 text-sm text-gray-600">{p.reference || '-'}</td>
+                  <td className="px-6 py-4 text-sm">
+                    {p.status === 'reversed' ? <span className="text-red-600">Reversed</span> : <><button onClick={() => downloadReceipt(p)} className="text-indigo-700 hover:underline mr-3">Receipt</button><button onClick={async () => {
+                      const note = window.prompt('Reason for reversing this payment:');
+                      if (!note?.trim()) return;
+                      try { await reversePayment(p._id, note.trim()); toast.success('Payment reversed'); load(); }
+                      catch (error) { toast.error(error.response?.data?.message || 'Could not reverse payment'); }
+                    }} className="text-red-600 hover:underline">Reverse</button></>}
+                  </td>
                 </tr>
               ))}
             </tbody>
@@ -160,11 +190,14 @@ export default function PaymentsPage() {
               <button onClick={() => setShowModal(false)}><X size={20} /></button>
             </div>
             <form onSubmit={handleSubmit} className="space-y-4">
-              <select value={form.contract} onChange={(e) => setForm({ ...form, contract: e.target.value })} className="w-full px-3 py-2 border rounded-md" required>
+              <select value={form.contract} onChange={(e) => {
+                const contract = contracts.find((item) => item._id === e.target.value);
+                setForm({ ...form, contract: e.target.value, customer: contract?.customer?._id || contract?.customer || '' });
+              }} className="w-full px-3 py-2 border rounded-md" required>
                 <option value="">Select Contract</option>
-                {contracts.map((c) => <option key={c._id} value={c._id}>{c.contractId} - {c.customer?.name || c.customer}</option>)}
+                {contracts.filter((c) => Number(c.remainingBalance) > 0).map((c) => <option key={c._id} value={c._id}>{c.contractId} - {c.customer?.name || c.customer} (ETB {c.remainingBalance} due)</option>)}
               </select>
-              <input type="number" placeholder="Amount (ETB)" value={form.amount} onChange={(e) => setForm({ ...form, amount: +e.target.value })} className="w-full px-3 py-2 border rounded-md" required />
+              <input type="number" min="0.01" step="0.01" max={contracts.find((c) => c._id === form.contract)?.remainingBalance || undefined} placeholder="Amount (ETB)" value={form.amount} onChange={(e) => setForm({ ...form, amount: +e.target.value })} className="w-full px-3 py-2 border rounded-md" required />
               <select value={form.paymentMethod} onChange={(e) => setForm({ ...form, paymentMethod: e.target.value })} className="w-full px-3 py-2 border rounded-md">
                 <option value="cash">Cash</option>
                 <option value="bank_transfer">Bank Transfer</option>

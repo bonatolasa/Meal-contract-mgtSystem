@@ -13,13 +13,21 @@ export class CustomersService {
   }
 
   async findAll() {
-    return this.customerModel.find().exec();
+    return this.customerModel.find({ isActive: true }).exec();
   }
 
   async findById(id: string) {
     const customer = await this.customerModel.findById(id).exec();
     if (!customer) throw new NotFoundException('Customer not found');
     return customer;
+  }
+
+  async findByUserId(userId: string) {
+    return this.customerModel.findOne({ user: userId }).exec();
+  }
+
+  async findMatching(query: any) {
+    return this.customerModel.find(query).sort({ name: 1 }).exec();
   }
 
   async update(id: string, data: any) {
@@ -29,7 +37,7 @@ export class CustomersService {
   }
 
   async delete(id: string) {
-    const customer = await this.customerModel.findByIdAndDelete(id).exec();
+    const customer = await this.customerModel.findByIdAndUpdate(id, { isActive: false }, { new: true }).exec();
     if (!customer) throw new NotFoundException('Customer not found');
     return customer;
   }

@@ -1,17 +1,29 @@
 import { Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
-import { MealTrackingService } from './meal-tracking.service';
 import { MealTrackingController } from './meal-tracking.controller';
-import { MealTracking, MealTrackingSchema } from './schemas/meal-tracking.schema';
 import { CustomersModule } from '../customers/customers.module';
+import { ContractsModule } from '../contracts/contracts.module';
+import { MealOperationsService } from './meal-operations.service';
+import { MenuItem, MenuItemSchema } from './schemas/menu-item.schema';
+import { DailyMenu, DailyMenuSchema } from './schemas/daily-menu.schema';
+import { MealSelection, MealSelectionSchema } from './schemas/meal-selection.schema';
+import { MealServing, MealServingSchema } from './schemas/meal-serving.schema';
+import { MealSettings, MealSettingsSchema } from './schemas/meal-settings.schema';
 
 @Module({
   imports: [
-    MongooseModule.forFeature([{ name: MealTracking.name, schema: MealTrackingSchema }]),
+    MongooseModule.forFeature([
+      { name: MenuItem.name, schema: MenuItemSchema },
+      { name: DailyMenu.name, schema: DailyMenuSchema },
+      { name: MealSelection.name, schema: MealSelectionSchema },
+      { name: MealServing.name, schema: MealServingSchema },
+      { name: MealSettings.name, schema: MealSettingsSchema },
+    ]),
     CustomersModule,
+    ContractsModule,
   ],
-  providers: [MealTrackingService],
+  providers: [MealOperationsService],
   controllers: [MealTrackingController],
-  exports: [MealTrackingService],
+  exports: [MealOperationsService],
 })
 export class MealTrackingModule {}

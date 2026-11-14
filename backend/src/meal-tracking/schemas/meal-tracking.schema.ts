@@ -8,6 +8,9 @@ export class MealTracking {
   @Prop({ type: Types.ObjectId, ref: 'Customer', required: true })
   customer: Types.ObjectId;
 
+  @Prop({ type: Types.ObjectId, ref: 'Contract', required: true })
+  contract: Types.ObjectId;
+
   @Prop({ required: true })
   date: Date;
 
@@ -25,6 +28,25 @@ export class MealTracking {
 
   @Prop()
   notes: string;
+
+  @Prop({ type: Types.ObjectId, ref: 'User' })
+  recordedBy: Types.ObjectId;
+
+  @Prop({ type: Object, default: {} })
+  mealCharges: Record<string, number>;
+
+  @Prop({ default: 0, min: 0 })
+  totalCharge: number;
+
+  @Prop({ enum: ['served', 'cancelled', 'reversed'], default: 'served' })
+  status: string;
+
+  @Prop({ type: Types.ObjectId, ref: 'User' })
+  reversedBy: Types.ObjectId;
+
+  @Prop()
+  reversalNote: string;
 }
 
 export const MealTrackingSchema = SchemaFactory.createForClass(MealTracking);
+MealTrackingSchema.index({ customer: 1, date: 1 }, { unique: true });

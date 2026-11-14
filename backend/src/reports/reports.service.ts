@@ -1,8 +1,8 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { Report, ReportDocument } from './schemas/report.schema';
-import { MealTrackingService } from '../meal-tracking/meal-tracking.service';
+import { MealOperationsService } from '../meal-tracking/meal-operations.service';
 import { ContractsService } from '../contracts/contracts.service';
 import { PaymentsService } from '../payments/payments.service';
 import { CustomersService } from '../customers/customers.service';
@@ -11,70 +11,70 @@ import { CustomersService } from '../customers/customers.service';
 export class ReportsService {
   constructor(
     @InjectModel(Report.name) private reportModel: Model<ReportDocument>,
-    private mealTrackingService: MealTrackingService,
+    private mealOperationsService: MealOperationsService,
     private contractsService: ContractsService,
     private paymentsService: PaymentsService,
     private customersService: CustomersService,
   ) {}
 
   async generateDailyReport(date: Date, generatedBy: string) {
-    const todayStats = await this.mealTrackingService.getTodayStats();
-    const activeContracts = await this.contractsService.getActiveContracts();
-    const outstanding = await this.paymentsService.getOutstandingBalances();
-
-    const reportData = {
-      date,
-      totalCustomersServed: todayStats.totalCustomers,
-      totalMealsServed: todayStats.totalMeals,
-      breakfastCount: todayStats.totalBreakfast,
-      lunchCount: todayStats.totalLunch,
-      dinnerCount: todayStats.totalDinner,
-      activeContractsCount: activeContracts.length,
-      outstandingPayments: outstanding.reduce((sum: number, c: any) => sum + c.remainingBalance, 0),
-    };
-
-    const report = new this.reportModel({
-      title: `Daily Report - ${date.toDateString()}`,
-      type: 'daily',
-      generatedAt: new Date(),
-      data: reportData,
-      generatedBy,
-    });
-    return report.save();
+    const start = new Date(date);
+    if (Number.isNaN(start.getTime())) throw new BadRequestException('Report date is invalid');
+    start.setHours(0, 0, 0, 0);
+    const end = new Date(start);
+    end.setDate(end.getDate() + 1);
+    return this.createSummary('daily', `Daily Report - ${start.toDateString()}`, start, end, generatedBy);
   }
 
   async generateWeeklyReport(startDate: Date, endDate: Date, generatedBy: string) {
-    const reportData = {
-      startDate,
-      endDate,
-      message: 'Weekly report data aggregated from daily meal tracking and payments',
-    };
-
-    const report = new this.reportModel({
-      title: `Weekly Report - ${startDate.toDateString()} to ${endDate.toDateString()}`,
-      type: 'weekly',
-      generatedAt: new Date(),
-      data: reportData,
-      generatedBy,
-    });
-    return report.save();
+    const start = new Date(startDate);
+    const end = new Date(endDate);
+    if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime()) || end < start) throw new BadRequestException('Report date range is invalid');
+    start.setHours(0, 0, 0, 0);
+    end.setHours(0, 0, 0, 0);
+    end.setDate(end.getDate() + 1);
+    return this.createSummary('weekly', `Weekly Report - ${start.toDateString()} to ${new Date(end.getTime() - 1).toDateString()}`, start, end, generatedBy);
   }
 
   async generateMonthlyReport(month: number, year: number, generatedBy: string) {
-    const reportData = {
-      month,
-      year,
-      message: 'Monthly report aggregated from all contracts, payments, and meal tracking',
-    };
+    if (month < 1 || month > 12 || !Number.isInteger(year)) throw new BadRequestException('Month or year is invalid');
+    const start = new Date(year, month - 1, 1);
+    const end = new Date(year, month, 1);
+    return this.createSummary('monthly', `Monthly Report - ${month}/${year}`, start, end, generatedBy);
+  }
 
-    const report = new this.reportModel({
-      title: `Monthly Report - ${month}/${year}`,
-      type: 'monthly',
+  private async createSummary(type: string, title: string, start: Date, end: Date, generatedBy: string) {
+    const [meals, collected, outstanding, contracts] = await Promise.all([
+      this.mealOperationsService.getMealActivityBetween(start, end),
+      this.paymentsService.getCollectedBetween(start, end),
+      this.paymentsService.getOutstandingBalances(),
+      this.contractsService.getContractCountsAsOf(new Date(end.getTime() - 1)),
+    ]);
+    return new this.reportModel({
+      title,
+      type,
       generatedAt: new Date(),
-      data: reportData,
       generatedBy,
-    });
-    return report.save();
+      data: {
+        periodStart: start,
+        periodEnd: new Date(end.getTime() - 1),
+        expectedMeals: meals.totalExpected,
+        totalMealsServed: meals.totalServed,
+        breakfastExpected: meals.expected.breakfast,
+        lunchExpected: meals.expected.lunch,
+        dinnerExpected: meals.expected.dinner,
+        breakfastServed: meals.actual.breakfast.served,
+        lunchServed: meals.actual.lunch.served,
+        dinnerServed: meals.actual.dinner.served,
+        breakfastNoShow: meals.actual.breakfast.noShow,
+        lunchNoShow: meals.actual.lunch.noShow,
+        dinnerNoShow: meals.actual.dinner.noShow,
+        paymentsCollected: collected,
+        outstandingBalance: outstanding.reduce((sum: number, contract: any) => sum + Number(contract.remainingBalance || 0), 0),
+        activeContracts: contracts.active,
+        expiredContracts: contracts.expired,
+      },
+    }).save();
   }
 
   async findAll() {

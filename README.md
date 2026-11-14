@@ -1,18 +1,23 @@
 # Restaurant & Canteen Food Contract Management System
 
-A complete web-based system for managing food contracts between restaurant owners and customers. Tracks daily meals, handles payments, generates reports, and sends notifications.
+A web-based system for monthly food subscriptions, student meal planning, actual serving records, customer payments, reports, and notifications.
 
 ## Features
 
 - **Customer Management** – Register and manage customer information.
 - **Food Contracts** – Create monthly, weekly, or daily food contracts.
-- **Meal Tracking** – Record breakfast, lunch, and dinner consumption.
+- **Monthly Contracts** – Students pay a fixed subscription price that does not change with daily attendance.
+- **Student Meal Selection** – Students choose eating or not eating for each meal and can update selections before configurable deadlines.
+- **Food Menus** – Publish dated breakfast, lunch, and dinner menus with English, Afaan Oromo, and Amharic names.
+- **Meal Preparation Summary** – Count expected meals, pending selections, and not-eating responses by date.
+- **Serving Records** – Employees record meals served or no-shows separately from student plans.
 - **Payment Management** – Track payments, debts, and outstanding balances.
 - **Food Packages** – Define meal packages and prices.
 - **Attendance** – Track which customers eat each day.
 - **Reports** – Generate daily, weekly, and monthly reports.
 - **Notifications** – Notify customers about expired contracts and unpaid bills.
-- **JWT Authentication** – Secure login with role-based access (admin, owner, employee).
+- **JWT Authentication** – Secure login with role-based access (admin, owner, student, employee). Students and employees can self-register; the first owner is provisioned manually.
+- **Role Dashboards** – Owners manage operations, employees record meals, and students view their own contracts, meals, and payments.
 
 ## Tech Stack
 
@@ -70,6 +75,16 @@ npm run start:dev
 
 API runs at `http://localhost:3000`.
 
+### Create the first owner account
+
+Owner accounts are never created through public registration. Create the first owner manually from `backend/` by supplying credentials in the environment:
+
+```bash
+OWNER_EMAIL=owner@example.com OWNER_NAME="Restaurant Owner" OWNER_PASSWORD="change-this-password" npm run create:owner
+```
+
+The password is hashed before it is saved. Students and employees can register through the public registration page. Authenticated owners can provision further user accounts through the protected user-management API.
+
 ### Frontend
 
 ```bash
@@ -95,24 +110,29 @@ BCRYPT_SALT_ROUNDS=10
 
 | Method | Path | Description |
 |--------|------|-------------|
-| POST | `/api/auth/register` | Register user |
+| POST | `/api/auth/register` | Public registration for students and employees only |
 | POST | `/api/auth/login` | Login user |
 | GET | `/api/auth/me` | Get current user |
-| GET/POST | `/api/users` | List/create users |
+| GET/POST | `/api/users` | List/create users (authenticated; use a trusted admin process to provision admin/owner accounts) |
 | GET/POST | `/api/customers` | List/create customers |
 | GET/POST | `/api/contracts` | List/create contracts |
-| GET/POST | `/api/meal-tracking` | List/record meals |
+| GET/POST | `/api/contracts/packages` | List/create meal packages |
+| GET | `/api/meal-tracking/servings/date/:date` | View actual serving records |
+| GET/PUT | `/api/meal-tracking/me/selections` | Student's own daily selection |
+| GET | `/api/meal-tracking/summary/:date` | Owner/employee preparation counts |
+| GET/POST | `/api/meal-tracking/daily-menu` | View/publish daily menus |
+| GET/POST | `/api/meal-tracking/menu-items` | View/create localized food items |
 | GET/POST | `/api/payments` | List/record payments |
 | POST | `/api/reports/daily` | Generate daily report |
 | POST | `/api/reports/weekly` | Generate weekly report |
 | POST | `/api/reports/monthly` | Generate monthly report |
 | GET/POST | `/api/notifications` | List/create notifications |
 
-## Phases
+## Development Roadmap
 
-- **Phase 1**: Customer registration, contracts, meal tracking ✅
-- **Phase 2**: Payments, debts, reports, notifications ✅
-- **Phase 3**: Food supplier contracts, inventory, QR-code scanning (future)
+- **Phase 1**: Authentication, role dashboards, customer accounts, contracts, and meal tracking (in progress)
+- **Phase 2**: Payments, debts, reports, and notifications (in progress)
+- **Phase 3**: Food supplier contracts, inventory, QR-code scanning (planned)
 
 ## License
 

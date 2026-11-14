@@ -23,6 +23,9 @@ export class Contract {
   @Prop({ enum: ['daily', 'weekly', 'monthly'], required: true })
   durationType: string;
 
+  @Prop({ enum: ['fixed_monthly'], default: 'fixed_monthly', required: true })
+  billingType: string;
+
   @Prop({ required: true })
   monthlyPrice: number;
 
@@ -35,7 +38,7 @@ export class Contract {
   @Prop({ default: 0 })
   remainingBalance: number;
 
-  @Prop({ enum: ['Active', 'Expired', 'Suspended'], default: 'Active' })
+  @Prop({ enum: ['Draft', 'Pending', 'Active', 'Expired', 'Suspended', 'Cancelled'], default: 'Pending' })
   status: string;
 
   @Prop({ enum: ['Pending', 'Paid', 'Overdue', 'Partial'], default: 'Pending' })
