@@ -30,7 +30,7 @@ export default function RegisterPage() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-100">
-      <div className="bg-white p-8 rounded-lg shadow-md w-96">
+      <div className="mx-4 w-full max-w-md bg-white p-5 sm:p-8 rounded-2xl shadow-xl">
         <h2 className="text-2xl font-bold text-center mb-2 text-indigo-900">Create an account</h2>
         <p className="text-center text-sm text-gray-600 mb-6">Register as a student or employee to use your meal contract.</p>
         <form onSubmit={handleSubmit} className="space-y-4">

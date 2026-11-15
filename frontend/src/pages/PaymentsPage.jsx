@@ -113,9 +113,9 @@ export default function PaymentsPage() {
         </div>
       </div>
 
-      <div className="bg-white rounded-lg shadow overflow-hidden mb-6">
+      <div className="bg-white rounded-lg shadow overflow-x-auto mb-6">
         <h3 className="text-lg font-semibold text-gray-900 px-6 py-4 border-b">Outstanding Balances</h3>
-        <table className="w-full text-left">
+        <table className="w-full min-w-[680px] text-left">
           <thead className="bg-gray-50">
             <tr>
               <th className="px-6 py-3 text-sm font-semibold text-gray-600">Contract ID</th>
@@ -143,9 +143,9 @@ export default function PaymentsPage() {
       {loading ? (
         <div className="text-center py-12">Loading...</div>
       ) : (
-        <div className="bg-white rounded-lg shadow overflow-hidden">
+        <div className="bg-white rounded-lg shadow overflow-x-auto">
           <h3 className="text-lg font-semibold text-gray-900 px-6 py-4 border-b">Payment History</h3>
-          <table className="w-full text-left">
+          <table className="w-full min-w-[920px] text-left">
             <thead className="bg-gray-50">
               <tr>
                 <th className="px-6 py-3 text-sm font-semibold text-gray-600">Date</th>
@@ -184,7 +184,7 @@ export default function PaymentsPage() {
 
       {showModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 w-96">
+          <div className="mx-4 w-[calc(100vw-2rem)] max-w-md max-h-[90dvh] overflow-y-auto bg-white rounded-2xl p-4 sm:p-6">
             <div className="flex justify-between items-center mb-4">
               <h3 className="text-lg font-semibold">Record Payment</h3>
               <button onClick={() => setShowModal(false)}><X size={20} /></button>

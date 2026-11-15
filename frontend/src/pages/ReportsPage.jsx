@@ -88,8 +88,8 @@ export default function ReportsPage() {
       {loading ? (
         <div className="text-center py-12">Loading...</div>
       ) : (
-        <div className="bg-white rounded-lg shadow overflow-hidden">
-          <table className="w-full text-left">
+        <div className="bg-white rounded-lg shadow overflow-x-auto">
+          <table className="w-full min-w-[720px] text-left">
             <thead className="bg-gray-50">
               <tr>
                 <th className="px-6 py-3 text-sm font-semibold text-gray-600">Title</th>
@@ -123,7 +123,7 @@ export default function ReportsPage() {
 
       {showModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 w-96">
+          <div className="mx-4 w-[calc(100vw-2rem)] max-w-md max-h-[90dvh] overflow-y-auto bg-white rounded-2xl p-4 sm:p-6">
             <div className="flex justify-between items-center mb-4">
               <h3 className="text-lg font-semibold">Generate Report</h3>
               <button onClick={() => setShowModal(false)}><X size={20} /></button>

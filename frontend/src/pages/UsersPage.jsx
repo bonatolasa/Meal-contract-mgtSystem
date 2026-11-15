@@ -64,7 +64,7 @@ export default function UsersPage() {
       </section>
       <section className="bg-white rounded-lg shadow p-6 xl:col-span-2">
         <h2 className="text-xl font-bold text-gray-900">Accounts</h2>
-        {loading ? <p className="py-8 text-gray-500">Loading…</p> : <div className="overflow-x-auto mt-4"><table className="w-full text-left">
+        {loading ? <p className="py-8 text-gray-500">Loading…</p> : <div className="overflow-x-auto mt-4"><table className="w-full min-w-[760px] text-left">
           <thead className="bg-gray-50"><tr><th className="px-4 py-3 text-sm">Name</th><th className="px-4 py-3 text-sm">Email</th><th className="px-4 py-3 text-sm">Role</th><th className="px-4 py-3 text-sm">Status</th><th className="px-4 py-3 text-sm">Action</th></tr></thead>
           <tbody className="divide-y">{users.map((user) => <tr key={user._id}><td className="px-4 py-3">{user.name}</td><td className="px-4 py-3">{user.email}</td><td className="px-4 py-3 capitalize">{user.role}</td><td className="px-4 py-3">{user.isActive ? 'Active' : 'Inactive'}</td><td className="px-4 py-3"><button onClick={() => toggleActive(user)} className="text-indigo-700 hover:underline">{user.isActive ? 'Deactivate' : 'Reactivate'}</button></td></tr>)}</tbody>
         </table></div>}

@@ -1,10 +1,10 @@
 import { useEffect, useState } from 'react';
 import {
   getCustomers, getContracts, getTodayStats, getOutstandingPayments, getUnreadNotifications, getPayments,
-  getMyCustomer, getMyContracts, getMyMealSelectionHistory, getMyPayments, getMealSummary, getUsers,
+  getMyCustomer, getMyContracts, getMyMealSelectionHistory, getMyPayments, getMealSummary, getUsers, getMealAttendance,
 } from '../services/api';
-import { Users, FileText, Utensils, CreditCard, Bell, TrendingUp, Calendar, DollarSign, ShieldCheck } from 'lucide-react';
-import { format } from 'date-fns';
+import { Users, FileText, Utensils, CreditCard, Bell, TrendingUp, Calendar, DollarSign, ShieldCheck, Search, ArrowRight, Coffee, Sun, Moon, Activity } from 'lucide-react';
+import { format, subDays } from 'date-fns';
 import { useAuth } from '../context/AuthContext';
 
 export default function DashboardPage() {
@@ -23,12 +23,28 @@ export default function DashboardPage() {
   const [studentData, setStudentData] = useState({ customer: null, contracts: [], meals: [], payments: [] });
   const [preparationSummary, setPreparationSummary] = useState(null);
   const [adminUsers, setAdminUsers] = useState([]);
+  const [weeklySummaries, setWeeklySummaries] = useState([]);
+  const [attendanceRows, setAttendanceRows] = useState([]);
+  const [attendanceDate, setAttendanceDate] = useState(format(new Date(), 'yyyy-MM-dd'));
+  const [attendanceSearch, setAttendanceSearch] = useState('');
+  const [attendanceLoading, setAttendanceLoading] = useState(false);
 
   useEffect(() => {
     if (user?.role === 'admin') loadAdminSummary();
     if (user?.role === 'owner' || user?.role === 'employee') loadStats();
     if (user?.role === 'student') loadStudentData();
   }, [user?.role]);
+
+  useEffect(() => {
+    if (user?.role !== 'owner') return;
+    let active = true;
+    setAttendanceLoading(true);
+    getMealAttendance(attendanceDate, attendanceSearch ? { name: attendanceSearch } : {})
+      .then((response) => { if (active) setAttendanceRows(response.data || []); })
+      .catch((error) => console.error('Failed to load attendance preview', error))
+      .finally(() => { if (active) setAttendanceLoading(false); });
+    return () => { active = false; };
+  }, [user?.role, attendanceDate, attendanceSearch]);
 
   const loadAdminSummary = async () => {
     try {
@@ -56,11 +72,10 @@ export default function DashboardPage() {
 
   if (user?.role === 'student') {
     return (
-      <section className="max-w-3xl">
-        <h1 className="text-2xl font-bold text-gray-900">Welcome, {user.name}</h1>
-        <p className="text-gray-600 mt-2">Your contract, meal history, and payments in one place.</p>
-        <div className="bg-white rounded-lg shadow p-6 mt-6">
-          <h2 className="font-semibold text-gray-900">Student account</h2>
+      <section className="mx-auto max-w-4xl">
+        <div className="rounded-2xl bg-gradient-to-br from-indigo-700 via-indigo-700 to-violet-700 p-5 text-white shadow-lg sm:p-7"><p className="text-xs font-bold uppercase tracking-[0.18em] text-indigo-200">Student dashboard</p><h1 className="mt-2 text-2xl font-bold sm:text-3xl">Welcome, {user.name}</h1><p className="mt-2 max-w-xl text-sm text-indigo-100 sm:text-base">Your contract, meal plan, and account activity at a glance.</p></div>
+        <div className="mt-5 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6">
+          <h2 className="font-semibold text-slate-900">Student account</h2>
           <p className="text-sm text-gray-600 mt-2">Signed in as {user.email}</p>
           {loading ? <p className="text-sm text-gray-500 mt-4">Loading your account…</p> : studentData.customer ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mt-5">
@@ -76,13 +91,13 @@ export default function DashboardPage() {
                   ['Amount paid', `ETB ${paid.toLocaleString()}`],
                   ['Outstanding balance', `ETB ${due.toLocaleString()}`],
                   ['Meals selected', meals],
-                ].map(([label, value]) => <div key={label} className="rounded-md bg-gray-50 p-4"><p className="text-xs text-gray-500">{label}</p><p className="font-semibold text-gray-900 mt-1">{value}</p></div>);
+                ].map(([label, value]) => <div key={label} className="rounded-xl border border-slate-100 bg-slate-50 p-3 sm:p-4"><p className="text-xs text-slate-500">{label}</p><p className="mt-1 break-words font-semibold text-slate-900">{value}</p></div>);
               })()}
             </div>
           ) : <p className="text-sm text-amber-700 mt-4">No customer profile is linked yet. Please contact the restaurant owner.</p>}
         </div>
-        <a href="/student/meals" className="mt-5 flex items-center justify-between bg-indigo-700 text-white rounded-lg shadow px-6 py-5 hover:bg-indigo-800">
-          <div><h2 className="font-semibold">Choose your meals</h2><p className="text-sm text-indigo-100 mt-1">View the menu and submit breakfast, lunch, and dinner selections.</p></div><Utensils />
+        <a href="/student/meals" className="mt-5 flex items-center justify-between gap-3 rounded-2xl bg-emerald-600 px-4 py-4 text-white shadow-md transition hover:bg-emerald-700 sm:px-6 sm:py-5">
+          <div><h2 className="font-semibold">Choose your meals</h2><p className="mt-1 text-sm text-emerald-50">View the menu and submit meal selections.</p></div><Utensils className="shrink-0" />
         </a>
       </section>
     );
@@ -90,18 +105,19 @@ export default function DashboardPage() {
 
   if (user?.role === 'employee') {
     return (
-      <section>
-        <h1 className="text-2xl font-bold text-gray-900">Employee Dashboard</h1>
-        <p className="text-gray-600 mt-1">{format(new Date(), 'EEEE, MMMM d, yyyy')}</p>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
-          <div className="bg-white rounded-lg shadow p-6">
-            <p className="text-sm text-gray-600">Meals recorded today</p>
-            <p className="text-3xl font-bold text-gray-900 mt-2">{loading ? '…' : stats.todayMeals}</p>
+      <section className="mx-auto max-w-5xl">
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between"><div><p className="text-xs font-bold uppercase tracking-[0.18em] text-indigo-600">Service desk</p><h1 className="mt-1 text-2xl font-bold text-slate-900 sm:text-3xl">Employee Dashboard</h1></div><p className="text-sm text-slate-500">{format(new Date(), 'EEEE, MMMM d, yyyy')}</p></div>
+        <div className="mt-5 grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <div className="rounded-2xl bg-gradient-to-br from-blue-600 to-indigo-700 p-6 text-white shadow-lg">
+            <p className="text-sm text-blue-100">Meals served today</p>
+            <p className="mt-2 text-4xl font-bold">{loading ? '…' : stats.todayMeals}</p>
+            <p className="mt-2 text-xs text-blue-100">Confirmed meal service records</p>
           </div>
-          <a href="/meal-serving" className="bg-indigo-700 text-white rounded-lg shadow p-6 hover:bg-indigo-800">
-            <Utensils size={28} />
-            <h2 className="font-semibold mt-3">Confirm meal serving</h2>
-            <p className="text-sm text-indigo-100 mt-1">Check a student's selection and record served meals or no-shows.</p>
+          <a href="/meal-serving" className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
+            <span className="inline-flex rounded-xl bg-emerald-50 p-3 text-emerald-700"><Utensils size={24} /></span>
+            <h2 className="mt-3 font-semibold text-slate-900">Confirm meal serving</h2>
+            <p className="mt-1 text-sm text-slate-500">Check a student’s selection and record served meals or no-shows.</p>
+            <span className="mt-4 inline-flex items-center gap-2 text-sm font-semibold text-indigo-700">Open serving list <ArrowRight size={16} /></span>
           </a>
         </div>
       </section>
@@ -133,7 +149,8 @@ export default function DashboardPage() {
         return;
       }
       const todayKey = format(new Date(), 'yyyy-MM-dd');
-      const [customersRes, contractsRes, statsRes, outstandingRes, notifRes, paymentsRes, preparationRes] = await Promise.all([
+      const chartDates = Array.from({ length: 7 }, (_, index) => subDays(new Date(), 6 - index));
+      const [customersRes, contractsRes, statsRes, outstandingRes, notifRes, paymentsRes, preparationRes, chartResponses] = await Promise.all([
         getCustomers(),
         getContracts(),
         getTodayStats(),
@@ -141,6 +158,7 @@ export default function DashboardPage() {
         getUnreadNotifications(),
         getPayments(),
         getMealSummary(todayKey),
+        Promise.all(chartDates.map((date) => getMealSummary(format(date, 'yyyy-MM-dd')))),
       ]);
 
       const contracts = contractsRes.data || [];
@@ -148,6 +166,7 @@ export default function DashboardPage() {
       const payments = paymentsRes.data || [];
       const unread = notifRes.data || [];
       setPreparationSummary(preparationRes.data);
+      setWeeklySummaries(chartResponses.map((response, index) => ({ date: chartDates[index], summary: response.data })));
 
       setStats({
         totalCustomers: customersRes.data?.length || 0,
@@ -166,99 +185,87 @@ export default function DashboardPage() {
     }
   };
 
-  const cards = [
-    { label: 'Total Customers', value: stats.totalCustomers, icon: Users, color: 'bg-blue-500' },
-    { label: 'Active Contracts', value: stats.activeContracts, icon: FileText, color: 'bg-green-500' },
-    { label: 'Expired Contracts', value: stats.expiredContracts, icon: Calendar, color: 'bg-red-500' },
-    { label: "Today's Customers", value: stats.todayCustomers, icon: Users, color: 'bg-purple-500' },
-    { label: "Today's Meals Served", value: stats.todayMeals, icon: Utensils, color: 'bg-orange-500' },
-    { label: 'Outstanding Payments', value: `ETB ${stats.outstandingAmount.toLocaleString()}`, icon: DollarSign, color: 'bg-yellow-500' },
-    { label: 'Payments Collected', value: `ETB ${stats.paymentsCollected.toLocaleString()}`, icon: CreditCard, color: 'bg-emerald-600' },
-    { label: 'Unread Notifications', value: stats.unreadNotifications, icon: Bell, color: 'bg-pink-500' },
-    { label: 'Active Rate', value: `${stats.totalCustomers > 0 ? Math.round((stats.activeContracts / Math.max(stats.totalCustomers, 1)) * 100) : 0}%`, icon: TrendingUp, color: 'bg-teal-500' },
+  const todayMeals = preparationSummary?.totalExpected || 0;
+  const summaryCards = [
+    { label: 'Registered customers', value: stats.totalCustomers, hint: `${stats.todayCustomers} with meals recorded today`, icon: Users, theme: 'from-blue-600 to-indigo-600', iconBg: 'bg-white/15' },
+    { label: 'Active contracts', value: stats.activeContracts, hint: `${stats.expiredContracts} expired`, icon: FileText, theme: 'from-emerald-500 to-teal-600', iconBg: 'bg-white/15' },
+    { label: 'Meals planned today', value: todayMeals, hint: `${preparationSummary?.activeStudents || 0} active students`, icon: Activity, theme: 'from-orange-500 to-amber-500', iconBg: 'bg-white/15' },
+    { label: 'Outstanding balance', value: `ETB ${stats.outstandingAmount.toLocaleString()}`, hint: `${stats.unreadNotifications} unread notifications`, icon: DollarSign, theme: 'from-violet-600 to-purple-600', iconBg: 'bg-white/15' },
   ];
+  const maxChartMeals = Math.max(1, ...weeklySummaries.map(({ summary }) => summary?.totalExpected || 0));
+  const mealStyles = {
+    breakfast: { label: 'Breakfast', icon: Coffee, color: 'bg-amber-500', soft: 'bg-amber-50 text-amber-800' },
+    lunch: { label: 'Lunch', icon: Sun, color: 'bg-emerald-500', soft: 'bg-emerald-50 text-emerald-800' },
+    dinner: { label: 'Dinner', icon: Moon, color: 'bg-violet-500', soft: 'bg-violet-50 text-violet-800' },
+  };
+  const badgeClass = (status) => status === 'EATING' ? 'bg-emerald-50 text-emerald-700 ring-emerald-600/20' : status === 'NOT_EATING' ? 'bg-rose-50 text-rose-700 ring-rose-600/20' : 'bg-slate-100 text-slate-600 ring-slate-500/20';
+  const badgeLabel = (status) => status === 'EATING' ? 'Eating' : status === 'NOT_EATING' ? 'Not eating' : 'Pending';
 
   return (
     <div>
-      <div className="mb-8">
-        <h1 className="text-2xl font-bold text-gray-900">Dashboard</h1>
-        <p className="text-gray-600 mt-1">{format(new Date(), 'EEEE, MMMM d, yyyy')}</p>
+      <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+        <div><p className="text-xs font-bold uppercase tracking-[0.18em] text-indigo-600">Restaurant overview</p><h1 className="mt-1 text-2xl sm:text-3xl font-bold tracking-tight text-slate-900">Good day, {user?.name?.split(' ')[0]}</h1><p className="text-slate-500 mt-1">Here’s what’s happening at your restaurant.</p></div>
+        <div className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-600 shadow-sm"><Calendar size={16} className="mr-2 inline text-indigo-600" />{format(new Date(), 'EEEE, MMMM d')}</div>
       </div>
 
       {loading ? (
         <div className="text-center py-12">Loading dashboard...</div>
       ) : (
         <>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-            {cards.map((card) => (
-              <div key={card.label} className="bg-white rounded-lg shadow p-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-medium text-gray-600">{card.label}</p>
-                    <p className="text-2xl font-bold text-gray-900 mt-1">{card.value}</p>
-                  </div>
-                  <div className={`p-3 rounded-full ${card.color}`}>
-                    <card.icon className="text-white" size={24} />
-                  </div>
-                </div>
-              </div>
+        <div className="grid grid-cols-1 min-[520px]:grid-cols-2 xl:grid-cols-4 gap-4 mb-6">
+            {summaryCards.map((card) => (
+              <article key={card.label} className={`relative overflow-hidden rounded-2xl bg-gradient-to-br ${card.theme} p-5 text-white shadow-lg shadow-slate-200/70`}>
+                <div className="absolute -right-5 -top-8 h-28 w-28 rounded-full bg-white/10" />
+                <div className="relative flex items-start justify-between gap-3"><div className="min-w-0"><p className="text-sm font-medium text-white/80">{card.label}</p><p className="mt-3 truncate text-2xl sm:text-3xl font-bold">{loading ? '…' : card.value}</p><p className="mt-2 truncate text-xs text-white/75">{card.hint}</p></div><span className={`rounded-xl p-3 ${card.iconBg}`}><card.icon size={22} /></span></div>
+              </article>
             ))}
           </div>
 
-          {preparationSummary && <section className="bg-white rounded-lg shadow p-6 mb-8">
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-4"><div><h2 className="text-lg font-semibold text-gray-900">Today's meal preparation</h2><p className="text-sm text-gray-500">Counts include student selections. Monthly contract prices do not change.</p></div><a href="/meal-attendance" className="text-sm font-medium text-indigo-700 hover:underline">Open attendance</a></div>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">{['breakfast', 'lunch', 'dinner'].map((meal) => <div key={meal} className="rounded-md bg-indigo-50 p-4"><p className="text-sm text-gray-600 capitalize">{meal}</p><p className="text-2xl font-bold text-indigo-800">{preparationSummary[meal].eating} meals</p><p className="text-xs text-gray-500">{preparationSummary[meal].pending} selections pending</p></div>)}</div>
-            <p className="font-semibold text-gray-900 mt-4">Total to prepare: {preparationSummary.totalExpected}</p>
-          </section>}
-
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <div className="bg-white rounded-lg shadow p-6">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">Quick Actions</h3>
-              <div className="grid grid-cols-2 gap-4">
-                <a href="/customers" className="p-4 bg-indigo-50 rounded-lg hover:bg-indigo-100 transition-colors text-center">
-                  <Users className="mx-auto mb-2 text-indigo-600" size={32} />
-                  <p className="font-medium text-indigo-900">Add Customer</p>
-                </a>
-                <a href="/contracts" className="p-4 bg-green-50 rounded-lg hover:bg-green-100 transition-colors text-center">
-                  <FileText className="mx-auto mb-2 text-green-600" size={32} />
-                  <p className="font-medium text-green-900">New Contract</p>
-                </a>
-                <a href="/meal-attendance" className="p-4 bg-orange-50 rounded-lg hover:bg-orange-100 transition-colors text-center">
-                  <Utensils className="mx-auto mb-2 text-orange-600" size={32} />
-                  <p className="font-medium text-orange-900">Meal Attendance</p>
-                </a>
-                <a href="/payments" className="p-4 bg-yellow-50 rounded-lg hover:bg-yellow-100 transition-colors text-center">
-                  <CreditCard className="mx-auto mb-2 text-yellow-600" size={32} />
-                  <p className="font-medium text-yellow-900">Record Payment</p>
-                </a>
+          <div className="grid grid-cols-1 xl:grid-cols-[1.35fr_0.85fr] gap-5 mb-6">
+            <section className="rounded-2xl border border-slate-200 bg-white p-4 sm:p-6 shadow-sm">
+              <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between"><div><h2 className="text-lg font-bold text-slate-900">Daily meal selections</h2><p className="text-sm text-slate-500">Expected meals over the last seven days</p></div><div className="flex flex-wrap gap-3 text-xs font-medium text-slate-600">{Object.entries(mealStyles).map(([key, meal]) => <span key={key} className="inline-flex items-center gap-1.5"><i className={`h-2.5 w-2.5 rounded-full ${meal.color}`} />{meal.label}</span>)}</div></div>
+              <div className="mt-5 flex h-48 items-end justify-between gap-2 border-b border-slate-100 pb-2 sm:gap-4">
+                {weeklySummaries.map(({ date, summary }) => {
+                  const total = summary?.totalExpected || 0;
+                  return <div key={date.toISOString()} className="flex h-full min-w-0 flex-1 flex-col items-center justify-end gap-2" title={`${format(date, 'EEEE, MMM d')}: ${total} meals`}>
+                    <span className="text-[10px] font-semibold text-slate-500 sm:text-xs">{total}</span>
+                    <div className="flex h-32 w-full max-w-10 flex-col-reverse overflow-hidden rounded-t-lg bg-slate-50">
+                      {Object.keys(mealStyles).map((meal) => <div key={meal} className={mealStyles[meal].color} style={{ height: `${(summary?.[meal]?.eating || 0) / maxChartMeals * 100}%`, minHeight: summary?.[meal]?.eating ? 2 : 0 }} />)}
+                    </div>
+                    <span className="text-[10px] text-slate-500 sm:text-xs">{format(date, 'EEE')}</span>
+                  </div>;
+                })}
               </div>
-            </div>
+              <p className="mt-3 text-xs text-slate-400">Meal counts use student selections. Monthly contract prices remain fixed.</p>
+            </section>
 
-            <div className="bg-white rounded-lg shadow p-6">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">System Overview</h3>
-              <div className="space-y-3">
-                <div className="flex justify-between items-center py-2 border-b">
-                  <span className="text-gray-600">Total Contracts</span>
-                  <span className="font-semibold">{stats.activeContracts + stats.expiredContracts}</span>
-                </div>
-                <div className="flex justify-between items-center py-2 border-b">
-                  <span className="text-gray-600">Active Contracts</span>
-                  <span className="font-semibold text-green-600">{stats.activeContracts}</span>
-                </div>
-                <div className="flex justify-between items-center py-2 border-b">
-                  <span className="text-gray-600">Expired Contracts</span>
-                  <span className="font-semibold text-red-600">{stats.expiredContracts}</span>
-                </div>
-                <div className="flex justify-between items-center py-2 border-b">
-                  <span className="text-gray-600">Outstanding Balance</span>
-                  <span className="font-semibold text-yellow-600">ETB {stats.outstandingAmount.toLocaleString()}</span>
-                </div>
-                <div className="flex justify-between items-center py-2">
-                  <span className="text-gray-600">Unread Notifications</span>
-                  <span className="font-semibold text-pink-600">{stats.unreadNotifications}</span>
-                </div>
-              </div>
-            </div>
+            <section className="rounded-2xl border border-slate-200 bg-white p-4 sm:p-6 shadow-sm">
+              <div className="flex items-start justify-between gap-3"><div><h2 className="text-lg font-bold text-slate-900">Today’s breakdown</h2><p className="text-sm text-slate-500">Meals expected by service</p></div><span className="rounded-xl bg-indigo-50 p-2.5 text-indigo-700"><Utensils size={20} /></span></div>
+              <div className="mt-4 space-y-3">{Object.entries(mealStyles).map(([key, meal]) => {
+                const count = preparationSummary?.[key]?.eating || 0;
+                const pending = preparationSummary?.[key]?.pending || 0;
+                const percentage = preparationSummary?.activeStudents ? Math.round(count / preparationSummary.activeStudents * 100) : 0;
+                return <div key={key} className={`rounded-xl p-3 ${meal.soft}`}><div className="flex items-center justify-between gap-2"><span className="inline-flex items-center gap-2 text-sm font-semibold"><meal.icon size={16} />{meal.label}</span><span className="text-lg font-bold">{count}<span className="ml-1 text-xs font-medium opacity-70">meals</span></span></div><div className="mt-2 h-1.5 overflow-hidden rounded-full bg-white/80"><div className={`h-full rounded-full ${meal.color}`} style={{ width: `${percentage}%` }} /></div><p className="mt-1.5 text-xs opacity-75">{pending} selections pending · {percentage}% of active students</p></div>;
+              })}</div>
+              <div className="mt-4 flex items-center justify-between border-t border-slate-100 pt-3"><span className="text-sm font-semibold text-slate-600">Total expected</span><span className="text-xl font-bold text-slate-900">{preparationSummary?.totalExpected || 0}</span></div>
+            </section>
+          </div>
+
+          <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+            <div className="flex flex-col gap-3 border-b border-slate-100 p-4 sm:flex-row sm:items-center sm:justify-between sm:p-5"><div><h2 className="text-lg font-bold text-slate-900">Student attendance</h2><p className="text-sm text-slate-500">Check meal selections and current status</p></div><div className="grid grid-cols-1 gap-2 min-[480px]:grid-cols-2"><label className="relative"><Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" /><input value={attendanceSearch} onChange={(event) => setAttendanceSearch(event.target.value)} placeholder="Search students" className="w-full rounded-xl border border-slate-200 py-2.5 pl-9 pr-3 text-sm outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100" /></label><input aria-label="Attendance date" type="date" value={attendanceDate} onChange={(event) => setAttendanceDate(event.target.value)} className="rounded-xl border border-slate-200 px-3 py-2 text-sm text-slate-700 outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100" /></div></div>
+            <div className="overflow-x-auto"><table className="w-full min-w-[720px] text-left"><thead className="bg-slate-50 text-xs uppercase tracking-wider text-slate-500"><tr><th className="px-5 py-3">Student</th>{Object.values(mealStyles).map((meal) => <th key={meal.label} className="px-4 py-3">{meal.label}</th>)}<th className="px-4 py-3">Submitted</th></tr></thead><tbody className="divide-y divide-slate-100">{attendanceRows.slice(0, 8).map((row) => <tr key={row.customer._id} className="hover:bg-slate-50/70"><td className="px-5 py-3"><p className="text-sm font-semibold text-slate-800">{row.customer.name}</p><p className="text-xs text-slate-400">{row.customer.customerId}</p></td>{['breakfast', 'lunch', 'dinner'].map((meal) => <td key={meal} className="px-4 py-3"><span className={`inline-flex rounded-full px-2.5 py-1 text-xs font-semibold ring-1 ring-inset ${badgeClass(row.selection[meal])}`}>{badgeLabel(row.selection[meal])}</span></td>)}<td className="px-4 py-3 text-sm text-slate-500">{row.selection.submitted ? 'Yes' : 'No'}</td></tr>)}</tbody></table></div>
+            {attendanceLoading && <p className="p-5 text-center text-sm text-slate-500">Updating attendance…</p>}
+            {!attendanceLoading && !attendanceRows.length && <p className="p-8 text-center text-sm text-slate-500">No active students found for this date.</p>}
+            <div className="flex flex-col gap-2 border-t border-slate-100 bg-slate-50/60 px-4 py-3 sm:flex-row sm:items-center sm:justify-between sm:px-5"><span className="text-xs text-slate-500">Showing {Math.min(attendanceRows.length, 8)} of {attendanceRows.length} students</span><a href="/meal-attendance" className="inline-flex items-center gap-1 text-sm font-semibold text-indigo-700 hover:text-indigo-900">Open attendance <ArrowRight size={15} /></a></div>
+          </section>
+
+          <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
+            {[
+              { label: 'Add customer', href: '/customers', icon: Users },
+              { label: 'New contract', href: '/contracts', icon: FileText },
+              { label: 'Record payment', href: '/payments', icon: CreditCard },
+              { label: 'Notifications', href: '/notifications', icon: Bell },
+            ].map((action) => <a key={action.href} href={action.href} className="group rounded-xl border border-slate-200 bg-white p-4 text-center shadow-sm transition hover:-translate-y-0.5 hover:border-indigo-200 hover:shadow-md"><action.icon className="mx-auto text-indigo-600 transition group-hover:scale-110" size={22} /><span className="mt-2 block text-xs font-semibold text-slate-700 sm:text-sm">{action.label}</span></a>)}
           </div>
         </>
       )}
