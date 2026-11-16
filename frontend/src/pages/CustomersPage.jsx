@@ -70,16 +70,16 @@ export default function CustomersPage() {
 
   return (
     <div>
-      <div className="flex justify-between items-center mb-6">
+      <div className="flex flex-col gap-4 sm:flex-row sm:justify-between sm:items-center mb-6">
         <div>
           <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
-            <Users size={28} className="text-indigo-600" /> Customers
+            <Users size={28} className="text-orange-700" /> Customers
           </h1>
           <p className="text-gray-600 mt-1">Manage customer information</p>
         </div>
         <button
           onClick={() => { setEditing(null); setForm(emptyForm); setShowModal(true); }}
-          className="bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700 flex items-center gap-2"
+          className="btn-primary"
         >
           <Plus size={18} /> Add Customer
         </button>

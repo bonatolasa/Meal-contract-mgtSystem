@@ -68,23 +68,23 @@ export default function PaymentsPage() {
 
   return (
     <div>
-      <div className="flex justify-between items-center mb-6">
+      <div className="flex flex-col gap-4 sm:flex-row sm:justify-between sm:items-center mb-6">
         <div>
           <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
-            <CreditCard size={28} className="text-indigo-600" /> Payments
+            <CreditCard size={28} className="text-orange-700" /> Payments
           </h1>
           <p className="text-gray-600 mt-1">Track payments, debts, and outstanding balances</p>
         </div>
         <button
           onClick={() => setShowModal(true)}
-          className="bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700 flex items-center gap-2"
+          className="btn-primary"
         >
           <Plus size={18} /> Record Payment
         </button>
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
-        <div className="bg-white rounded-lg shadow p-4">
+        <div className="surface p-4">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-gray-600">Total Payments</p>
@@ -93,7 +93,7 @@ export default function PaymentsPage() {
             <DollarSign className="text-green-500" size={32} />
           </div>
         </div>
-        <div className="bg-white rounded-lg shadow p-4">
+        <div className="surface p-4">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-gray-600">Outstanding Balance</p>
@@ -102,7 +102,7 @@ export default function PaymentsPage() {
             <AlertTriangle className="text-red-500" size={32} />
           </div>
         </div>
-        <div className="bg-white rounded-lg shadow p-4">
+        <div className="surface p-4">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-gray-600">Contracts with Balance</p>
