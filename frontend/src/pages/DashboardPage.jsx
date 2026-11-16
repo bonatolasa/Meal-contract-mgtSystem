@@ -73,7 +73,7 @@ export default function DashboardPage() {
   if (user?.role === 'student') {
     return (
       <section className="mx-auto max-w-4xl">
-        <div className="rounded-2xl bg-gradient-to-br from-indigo-700 via-indigo-700 to-violet-700 p-5 text-white shadow-lg sm:p-7"><p className="text-xs font-bold uppercase tracking-[0.18em] text-indigo-200">Student dashboard</p><h1 className="mt-2 text-2xl font-bold sm:text-3xl">Welcome, {user.name}</h1><p className="mt-2 max-w-xl text-sm text-indigo-100 sm:text-base">Your contract, meal plan, and account activity at a glance.</p></div>
+        <div className="relative overflow-hidden rounded-2xl bg-[#303b32] p-5 text-white shadow-sm sm:p-7"><div className="absolute -right-8 -top-16 h-56 w-56 rounded-full border-[24px] border-white/[0.04]"/><p className="relative text-xs font-bold uppercase tracking-[0.18em] text-orange-200">Your table</p><h1 className="relative mt-2 text-2xl font-bold sm:text-3xl">Welcome, {user.name}</h1><p className="relative mt-2 max-w-xl text-sm text-white/70 sm:text-base">Your contract, meal plan, and account activity at a glance.</p></div>
         <div className="mt-5 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6">
           <h2 className="font-semibold text-slate-900">Student account</h2>
           <p className="text-sm text-gray-600 mt-2">Signed in as {user.email}</p>
@@ -96,8 +96,8 @@ export default function DashboardPage() {
             </div>
           ) : <p className="text-sm text-amber-700 mt-4">No customer profile is linked yet. Please contact the restaurant owner.</p>}
         </div>
-        <a href="/student/meals" className="mt-5 flex items-center justify-between gap-3 rounded-2xl bg-emerald-600 px-4 py-4 text-white shadow-md transition hover:bg-emerald-700 sm:px-6 sm:py-5">
-          <div><h2 className="font-semibold">Choose your meals</h2><p className="mt-1 text-sm text-emerald-50">View the menu and submit meal selections.</p></div><Utensils className="shrink-0" />
+        <a href="/student/meals" className="mt-5 flex items-center justify-between gap-3 rounded-2xl bg-[#b85e35] px-4 py-4 text-white shadow-sm transition hover:bg-[#a44f2b] sm:px-6 sm:py-5">
+          <div><h2 className="font-semibold">Choose your meals</h2><p className="mt-1 text-sm text-orange-50">View the menu and submit meal selections.</p></div><Utensils className="shrink-0" />
         </a>
       </section>
     );
@@ -108,10 +108,10 @@ export default function DashboardPage() {
       <section className="mx-auto max-w-5xl">
         <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between"><div><p className="text-xs font-bold uppercase tracking-[0.18em] text-indigo-600">Service desk</p><h1 className="mt-1 text-2xl font-bold text-slate-900 sm:text-3xl">Employee Dashboard</h1></div><p className="text-sm text-slate-500">{format(new Date(), 'EEEE, MMMM d, yyyy')}</p></div>
         <div className="mt-5 grid grid-cols-1 gap-4 sm:grid-cols-2">
-          <div className="rounded-2xl bg-gradient-to-br from-blue-600 to-indigo-700 p-6 text-white shadow-lg">
-            <p className="text-sm text-blue-100">Meals served today</p>
+          <div className="rounded-2xl bg-[#303b32] p-6 text-white shadow-sm">
+            <p className="text-sm text-white/70">Meals served today</p>
             <p className="mt-2 text-4xl font-bold">{loading ? '…' : stats.todayMeals}</p>
-            <p className="mt-2 text-xs text-blue-100">Confirmed meal service records</p>
+            <p className="mt-2 text-xs text-white/60">Confirmed meal service records</p>
           </div>
           <a href="/meal-serving" className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
             <span className="inline-flex rounded-xl bg-emerald-50 p-3 text-emerald-700"><Utensils size={24} /></span>
@@ -131,10 +131,10 @@ export default function DashboardPage() {
     }, {});
     return (
       <section className="max-w-5xl mx-auto">
-        <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2"><ShieldCheck className="text-indigo-700" /> Admin Dashboard</h1>
+        <h1 className="page-heading flex items-center gap-2"><ShieldCheck className="text-orange-700" /> Admin Dashboard</h1>
         <p className="text-gray-600 mt-1">Manage system accounts and access.</p>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mt-6">
-          {['admin', 'owner', 'employee', 'student'].map((role) => <div key={role} className="bg-white rounded-lg shadow p-5"><p className="text-sm text-gray-500 capitalize">{role} accounts</p><p className="text-3xl font-bold text-gray-900 mt-2">{loading ? '…' : counts[role] || 0}</p></div>)}
+          {['admin', 'owner', 'employee', 'student'].map((role) => <div key={role} className="surface p-5"><p className="text-sm text-gray-500 capitalize">{role} accounts</p><p className="text-3xl font-bold text-gray-900 mt-2">{loading ? '…' : counts[role] || 0}</p></div>)}
         </div>
         <a href="/users" className="mt-6 inline-flex items-center gap-2 bg-indigo-700 text-white rounded-md px-5 py-3 hover:bg-indigo-800"><Users size={18} /> Manage staff and accounts</a>
       </section>
@@ -204,7 +204,7 @@ export default function DashboardPage() {
   return (
     <div>
       <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-        <div><p className="text-xs font-bold uppercase tracking-[0.18em] text-indigo-600">Restaurant overview</p><h1 className="mt-1 text-2xl sm:text-3xl font-bold tracking-tight text-slate-900">Good day, {user?.name?.split(' ')[0]}</h1><p className="text-slate-500 mt-1">Here’s what’s happening at your restaurant.</p></div>
+        <div><p className="text-xs font-bold uppercase tracking-[0.18em] text-orange-700">Your restaurant</p><h1 className="mt-1 text-2xl sm:text-3xl font-bold tracking-tight text-slate-900">Good day, {user?.name?.split(' ')[0]}</h1><p className="text-slate-500 mt-1">Here’s what’s happening at your restaurant.</p></div>
         <div className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-600 shadow-sm"><Calendar size={16} className="mr-2 inline text-indigo-600" />{format(new Date(), 'EEEE, MMMM d')}</div>
       </div>
 
@@ -213,10 +213,9 @@ export default function DashboardPage() {
       ) : (
         <>
         <div className="grid grid-cols-1 min-[520px]:grid-cols-2 xl:grid-cols-4 gap-4 mb-6">
-            {summaryCards.map((card) => (
-              <article key={card.label} className={`relative overflow-hidden rounded-2xl bg-gradient-to-br ${card.theme} p-5 text-white shadow-lg shadow-slate-200/70`}>
-                <div className="absolute -right-5 -top-8 h-28 w-28 rounded-full bg-white/10" />
-                <div className="relative flex items-start justify-between gap-3"><div className="min-w-0"><p className="text-sm font-medium text-white/80">{card.label}</p><p className="mt-3 truncate text-2xl sm:text-3xl font-bold">{loading ? '…' : card.value}</p><p className="mt-2 truncate text-xs text-white/75">{card.hint}</p></div><span className={`rounded-xl p-3 ${card.iconBg}`}><card.icon size={22} /></span></div>
+            {summaryCards.map((card, index) => (
+              <article key={card.label} className="surface relative overflow-hidden p-5">
+                <div className="flex items-start justify-between gap-3"><div className="min-w-0"><p className="text-sm font-medium text-slate-500">{card.label}</p><p className="mt-3 truncate text-2xl font-bold text-slate-900 sm:text-3xl">{loading ? '…' : card.value}</p><p className="mt-2 truncate text-xs text-slate-400">{card.hint}</p></div><span className={`rounded-xl p-3 ${['bg-orange-50 text-orange-700','bg-emerald-50 text-emerald-700','bg-amber-50 text-amber-700','bg-stone-100 text-stone-700'][index]}`}><card.icon size={22} /></span></div>
               </article>
             ))}
           </div>
