@@ -40,6 +40,8 @@ export default function Layout() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const navItems = user?.role === 'student' ? studentNavItems : user?.role === 'employee' ? employeeNavItems : user?.role === 'admin' ? adminNavItems : ownerNavItems;
+  const primaryItems = user?.role === 'owner' ? navItems.slice(0, 5) : navItems;
+  const secondaryItems = user?.role === 'owner' ? navItems.slice(5) : [];
   const notificationPath = user?.role === 'student' ? '/student/notifications' : ['owner', 'admin'].includes(user?.role) ? '/notifications' : null;
 
   const handleLogout = () => {
@@ -61,7 +63,7 @@ export default function Layout() {
         </div>
         <div className={`px-5 pb-2 pt-6 text-[10px] font-bold uppercase tracking-[0.18em] text-white/40 ${sidebarCollapsed ? 'lg:hidden' : ''}`}>{user?.role === 'student' ? 'My account' : user?.role === 'employee' ? 'Service desk' : user?.role === 'admin' ? 'Administration' : 'Restaurant'}</div>
         <nav className="px-3">
-          {navItems.map((item) => (
+          {primaryItems.map((item) => (
             <NavLink
               key={item.path}
               to={item.path}
@@ -80,13 +82,19 @@ export default function Layout() {
               </>}
             </NavLink>
           ))}
+          {secondaryItems.length > 0 && <>
+            <div className={`px-3 pb-2 pt-6 text-[10px] font-bold uppercase tracking-[0.18em] text-white/35 ${sidebarCollapsed ? 'lg:hidden' : ''}`}>More</div>
+            {secondaryItems.map((item) => <NavLink key={item.path} to={item.path} onClick={() => setSidebarOpen(false)} title={sidebarCollapsed ? item.label : undefined} className={({ isActive }) => `nav-item flex items-center gap-3 px-3 py-3 text-sm font-medium transition-colors ${sidebarCollapsed ? 'lg:justify-center lg:px-2' : ''} ${isActive ? 'nav-item-active' : ''}`}>
+              {({ isActive }) => <><item.icon className="shrink-0" size={18} /><span className={`flex-1 ${sidebarCollapsed ? 'lg:hidden' : ''}`}>{item.label}</span>{!sidebarCollapsed && <ChevronRight size={14} className={`text-white/25 transition ${isActive ? 'text-white/70' : ''}`} />}</>}
+            </NavLink>)}
+          </>}
         </nav>
       </aside>
 
       {/* Main content */}
       <div className={`flex min-w-0 flex-1 flex-col transition-[margin] duration-300 ${sidebarCollapsed ? 'lg:ml-20' : 'lg:ml-64'}`}>
         {/* Header */}
-        <header className="app-header min-h-[76px] flex items-center justify-between gap-2 px-3 sm:px-6 sticky top-0 z-30">
+        <header className="app-header min-h-[68px] flex items-center justify-between gap-2 px-3 sm:px-6 sticky top-0 z-30">
           <button aria-label="Open navigation" className="btn-icon lg:hidden text-gray-600" onClick={() => setSidebarOpen(true)}>
             <Menu size={24} />
           </button>
@@ -112,7 +120,7 @@ export default function Layout() {
         </header>
 
         {/* Page content */}
-        <main className="app-main min-w-0 flex-1 overflow-x-hidden overflow-y-auto p-3 sm:p-6 lg:p-8">
+        <main className="app-main min-w-0 flex-1 overflow-x-hidden overflow-y-auto p-4 sm:p-6 lg:p-8">
           <Outlet />
         </main>
       </div>

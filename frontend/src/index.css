@@ -20,19 +20,19 @@
   }
 
   .page-heading { @apply text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl; }
-  .surface { @apply rounded-2xl border border-stone-200/80 bg-white shadow-sm; }
+  .surface { @apply rounded-xl border border-stone-200/80 bg-white shadow-sm; }
 }
 
 :root { color-scheme: light; font-synthesis: none; text-rendering: optimizeLegibility; }
 
 .app-shell { background: #f6f5f1; }
-.app-sidebar { background: #252e28; box-shadow: 8px 0 28px rgb(25 35 28 / 8%); }
+.app-sidebar { background: #26322b; box-shadow: 8px 0 28px rgb(25 35 28 / 8%); }
 .brand-mark { display: grid; width: 38px; height: 38px; place-items: center; border-radius: 12px; background: #d97843; color: white; font-weight: 800; }
-.nav-item { margin: 3px 0; border-radius: 10px; color: rgb(255 255 255 / 68%); }
+.nav-item { margin: 2px 0; border-radius: 9px; color: rgb(255 255 255 / 68%); }
 .nav-item:hover { background: rgb(255 255 255 / 7%); color: white; }
 .nav-item-active { background: rgb(217 120 67 / 18%); color: #ffc49f; box-shadow: inset 3px 0 #e68a55; }
 .app-header { background: rgb(255 255 255 / 92%); border-bottom: 1px solid #e9e7e1; backdrop-filter: blur(14px); }
-.app-main { background: radial-gradient(ellipse at 86% 0%, rgb(224 151 101 / 7%), transparent 34%), #f6f5f1; }
+.app-main { background: #f7f7f4; }
 .profile-avatar { display: grid; width: 38px; height: 38px; flex-shrink: 0; place-items: center; border: 1px solid #f0d4c3; border-radius: 50%; background: #fbede4; color: #99532f; font-size: 12px; font-weight: 800; }
 
 button {
@@ -58,4 +58,18 @@ body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   background-color: #f6f5f1;
+}
+
+/* Keep page surfaces and controls visually calm and consistent. */
+input, select, textarea {
+  border-radius: 0.65rem;
+}
+
+table thead {
+  background: #fafaf8;
+}
+
+@media (max-width: 639px) {
+  .page-heading { font-size: 1.5rem; line-height: 2rem; }
+  .surface { border-radius: 0.85rem; }
 }
