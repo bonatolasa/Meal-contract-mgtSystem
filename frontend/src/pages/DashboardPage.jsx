@@ -187,10 +187,9 @@ export default function DashboardPage() {
 
   const todayMeals = preparationSummary?.totalExpected || 0;
   const summaryCards = [
-    { label: 'Registered customers', value: stats.totalCustomers, hint: `${stats.todayCustomers} with meals recorded today`, icon: Users, theme: 'from-blue-600 to-indigo-600', iconBg: 'bg-white/15' },
-    { label: 'Active contracts', value: stats.activeContracts, hint: `${stats.expiredContracts} expired`, icon: FileText, theme: 'from-emerald-500 to-teal-600', iconBg: 'bg-white/15' },
-    { label: 'Meals planned today', value: todayMeals, hint: `${preparationSummary?.activeStudents || 0} active students`, icon: Activity, theme: 'from-orange-500 to-amber-500', iconBg: 'bg-white/15' },
-    { label: 'Outstanding balance', value: `ETB ${stats.outstandingAmount.toLocaleString()}`, hint: `${stats.unreadNotifications} unread notifications`, icon: DollarSign, theme: 'from-violet-600 to-purple-600', iconBg: 'bg-white/15' },
+    { label: 'Customers', value: stats.totalCustomers, hint: `${stats.activeContracts} active contracts`, icon: Users },
+    { label: 'Meals expected today', value: todayMeals, hint: `${preparationSummary?.activeStudents || 0} active students`, icon: Utensils },
+    { label: 'Money still due', value: `ETB ${stats.outstandingAmount.toLocaleString()}`, hint: `${stats.unreadNotifications} unread notifications`, icon: DollarSign },
   ];
   const maxChartMeals = Math.max(1, ...weeklySummaries.map(({ summary }) => summary?.totalExpected || 0));
   const mealStyles = {
@@ -204,7 +203,7 @@ export default function DashboardPage() {
   return (
     <div>
       <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-        <div><p className="text-xs font-bold uppercase tracking-[0.18em] text-orange-700">Your restaurant</p><h1 className="mt-1 text-2xl sm:text-3xl font-bold tracking-tight text-slate-900">Good day, {user?.name?.split(' ')[0]}</h1><p className="text-slate-500 mt-1">Here’s what’s happening at your restaurant.</p></div>
+        <div><p className="text-xs font-bold uppercase tracking-[0.18em] text-orange-700">Your restaurant</p><h1 className="mt-1 text-2xl sm:text-3xl font-bold tracking-tight text-slate-900">Hello, {user?.name?.split(' ')[0]}</h1><p className="text-slate-500 mt-1">A quick look at today and your accounts.</p></div>
         <div className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-600 shadow-sm"><Calendar size={16} className="mr-2 inline text-indigo-600" />{format(new Date(), 'EEEE, MMMM d')}</div>
       </div>
 
@@ -212,17 +211,17 @@ export default function DashboardPage() {
         <div className="text-center py-12">Loading dashboard...</div>
       ) : (
         <>
-        <div className="grid grid-cols-1 min-[520px]:grid-cols-2 xl:grid-cols-4 gap-4 mb-6">
+        <div className="grid grid-cols-1 min-[520px]:grid-cols-3 gap-4 mb-6">
             {summaryCards.map((card, index) => (
               <article key={card.label} className="surface relative overflow-hidden p-5">
-                <div className="flex items-start justify-between gap-3"><div className="min-w-0"><p className="text-sm font-medium text-slate-500">{card.label}</p><p className="mt-3 truncate text-2xl font-bold text-slate-900 sm:text-3xl">{loading ? '…' : card.value}</p><p className="mt-2 truncate text-xs text-slate-400">{card.hint}</p></div><span className={`rounded-xl p-3 ${['bg-orange-50 text-orange-700','bg-emerald-50 text-emerald-700','bg-amber-50 text-amber-700','bg-stone-100 text-stone-700'][index]}`}><card.icon size={22} /></span></div>
+                <div className="flex items-start justify-between gap-3"><div className="min-w-0"><p className="text-sm font-medium text-slate-500">{card.label}</p><p className="mt-3 truncate text-2xl font-bold text-slate-900 sm:text-3xl">{loading ? '…' : card.value}</p><p className="mt-2 truncate text-xs text-slate-400">{card.hint}</p></div><span className={`rounded-xl p-3 ${['bg-orange-50 text-orange-700','bg-emerald-50 text-emerald-700','bg-amber-50 text-amber-700'][index]}`}><card.icon size={22} /></span></div>
               </article>
             ))}
           </div>
 
           <div className="grid grid-cols-1 xl:grid-cols-[1.35fr_0.85fr] gap-5 mb-6">
             <section className="rounded-2xl border border-slate-200 bg-white p-4 sm:p-6 shadow-sm">
-              <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between"><div><h2 className="text-lg font-bold text-slate-900">Daily meal selections</h2><p className="text-sm text-slate-500">Expected meals over the last seven days</p></div><div className="flex flex-wrap gap-3 text-xs font-medium text-slate-600">{Object.entries(mealStyles).map(([key, meal]) => <span key={key} className="inline-flex items-center gap-1.5"><i className={`h-2.5 w-2.5 rounded-full ${meal.color}`} />{meal.label}</span>)}</div></div>
+              <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between"><div><h2 className="text-lg font-bold text-slate-900">Meal count this week</h2><p className="text-sm text-slate-500">Expected meals each day</p></div><div className="flex flex-wrap gap-3 text-xs font-medium text-slate-600">{Object.entries(mealStyles).map(([key, meal]) => <span key={key} className="inline-flex items-center gap-1.5"><i className={`h-2.5 w-2.5 rounded-full ${meal.color}`} />{meal.label}</span>)}</div></div>
               <div className="mt-5 flex h-48 items-end justify-between gap-2 border-b border-slate-100 pb-2 sm:gap-4">
                 {weeklySummaries.map(({ date, summary }) => {
                   const total = summary?.totalExpected || 0;

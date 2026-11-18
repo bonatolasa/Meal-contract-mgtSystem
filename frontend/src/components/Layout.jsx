@@ -9,10 +9,10 @@ const ownerNavItems = [
   { path: '/owner/dashboard', label: 'Dashboard', icon: LayoutDashboard },
   { path: '/customers', label: 'Customers', icon: Users },
   { path: '/contracts', label: 'Contracts', icon: FileText },
+  { path: '/payments', label: 'Payments', icon: CreditCard },
+  { path: '/meal-attendance', label: 'Meal Attendance', icon: ClipboardList },
   { path: '/packages', label: 'Meal Packages', icon: Soup },
   { path: '/food-menu', label: 'Food Menu', icon: BookOpen },
-  { path: '/meal-attendance', label: 'Daily Meal Attendance', icon: ClipboardList },
-  { path: '/payments', label: 'Payments', icon: CreditCard },
   { path: '/reports', label: 'Reports', icon: BarChart3 },
   { path: '/notifications', label: 'Notifications', icon: Bell },
 ];
