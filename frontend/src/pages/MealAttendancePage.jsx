@@ -10,7 +10,7 @@ export default function MealAttendancePage() {
   const [date, setDate] = useState(format(new Date(), 'yyyy-MM-dd'));
   const [summary, setSummary] = useState(null);
   const [rows, setRows] = useState([]);
-  const [filters, setFilters] = useState({ name: '', mealType: '', status: '' });
+  const [filters, setFilters] = useState({ name: '', mealType: '', status: '', customerType: '', submitted: '' });
   const [loading, setLoading] = useState(true);
 
   const load = async () => {
@@ -26,7 +26,7 @@ export default function MealAttendancePage() {
     }
   };
 
-  useEffect(() => { load(); }, [date, filters.name, filters.mealType, filters.status]);
+  useEffect(() => { load(); }, [date, filters.name, filters.mealType, filters.status, filters.customerType, filters.submitted]);
 
   const handleFilterName = (event) => {
     const name = event.target.value;
@@ -72,7 +72,9 @@ export default function MealAttendancePage() {
           <label className="block text-xs font-semibold text-slate-600">Student name<span className="relative mt-1.5 block"><Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" /><input value={filters.name} onChange={handleFilterName} placeholder="Search students" className="w-full rounded-xl border border-slate-200 py-2.5 pl-9 pr-3 text-sm font-normal outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100" /></span></label>
           <label className="block text-xs font-semibold text-slate-600">Meal<select aria-label="Filter by meal" value={filters.mealType} onChange={(event) => setFilters({ ...filters, mealType: event.target.value })} className="mt-1.5 w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm font-normal text-slate-700 outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100"><option value="">All meals</option>{mealTypes.map((meal) => <option key={meal} value={meal}>{meal[0].toUpperCase() + meal.slice(1)}</option>)}</select></label>
           <label className="block text-xs font-semibold text-slate-600">Selection status<select aria-label="Filter by status" value={filters.status} onChange={(event) => setFilters({ ...filters, status: event.target.value })} className="mt-1.5 w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm font-normal text-slate-700 outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100"><option value="">All selections</option><option value="EATING">Eating</option><option value="NOT_EATING">Not eating</option><option value="PENDING">Not submitted</option></select></label>
-          {(filters.name || filters.mealType || filters.status) && <button type="button" onClick={() => setFilters({ name: '', mealType: '', status: '' })} className="inline-flex items-center gap-1.5 pt-1 text-xs font-semibold text-indigo-700 hover:text-indigo-900"><X size={14} /> Clear all filters</button>}
+          <label className="block text-xs font-semibold text-slate-600">Customer type<select aria-label="Filter by customer type" value={filters.customerType} onChange={(event) => setFilters({ ...filters, customerType: event.target.value })} className="mt-1.5 w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm font-normal text-slate-700 outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100"><option value="">All types</option><option value="student">Student</option><option value="employee">Employee</option><option value="individual">Individual</option></select></label>
+          <label className="block text-xs font-semibold text-slate-600">Submission<select aria-label="Filter by submission" value={filters.submitted} onChange={(event) => setFilters({ ...filters, submitted: event.target.value })} className="mt-1.5 w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm font-normal text-slate-700 outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100"><option value="">All submissions</option><option value="true">Submitted</option><option value="false">Not submitted</option></select></label>
+          {(filters.name || filters.mealType || filters.status || filters.customerType || filters.submitted) && <button type="button" onClick={() => setFilters({ name: '', mealType: '', status: '', customerType: '', submitted: '' })} className="inline-flex items-center gap-1.5 pt-1 text-xs font-semibold text-indigo-700 hover:text-indigo-900"><X size={14} /> Clear all filters</button>}
         </div><div className="mt-5 border-t border-slate-100 pt-4"><p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Submission progress</p><div className="mt-2 flex items-center justify-between text-xs"><span className="text-slate-500">Submitted</span><span className="font-semibold text-slate-700">{submittedCount} / {rows.length}</span></div><div className="mt-2 h-1.5 overflow-hidden rounded-full bg-slate-100"><div className="h-full rounded-full bg-indigo-600 transition-all" style={{ width: `${rows.length ? submittedCount / rows.length * 100 : 0}%` }} /></div></div></aside>
 
         <section className="min-w-0 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
