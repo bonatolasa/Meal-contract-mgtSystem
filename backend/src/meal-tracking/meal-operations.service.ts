@@ -281,6 +281,9 @@ export class MealOperationsService {
       const escaped = String(filters.name).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
       customerQuery.name = { $regex: escaped, $options: 'i' };
     }
+    if (['student', 'employee', 'individual'].includes(filters.customerType)) {
+      customerQuery.type = filters.customerType;
+    }
     const customers = await this.customersService.findMatching(customerQuery);
     const ids = customers.map((customer: any) => customer._id);
     let selectionQuery: any = { date, customer: { $in: ids } };
@@ -298,6 +301,8 @@ export class MealOperationsService {
       };
     });
     return rows.filter((row) => {
+      if (filters.submitted === 'true' && !row.selection.submitted) return false;
+      if (filters.submitted === 'false' && row.selection.submitted) return false;
       if (!filters.status) return true;
       if (MEALS.includes(filters.mealType)) return row.selection[filters.mealType] === filters.status;
       return MEALS.some((meal) => row.selection[meal] === filters.status);
